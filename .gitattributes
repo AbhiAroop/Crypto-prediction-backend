@@ -1,0 +1,13 @@
+# Auto detect text files and perform LF normalization
+* text=auto eol=lf
+
+# Python files
+*.py text diff=python eol=lf
+
+# Text files
+*.md text eol=lf
+*.txt text eol=lf
+
+# Ensure Windows batch files preserve CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
