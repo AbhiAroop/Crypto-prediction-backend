@@ -8,7 +8,7 @@ from models.prediction_model import PredictionModel
 from utils.data_processor import preprocess_data, create_sequences, validate_input
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Initialize the prediction model
 model = PredictionModel()
