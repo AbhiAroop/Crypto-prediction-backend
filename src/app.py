@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import numpy as np
+import os
 from datetime import datetime
 from services.crypto_service import get_prediction_data
 from models.prediction_model import PredictionModel
@@ -128,4 +129,5 @@ def predict():
         return jsonify({'error': f'Internal server error: {str(e)}'}), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8000)
+    port = int(os.getenv('PORT', 8000))
+    app.run(host='0.0.0.0', port=port)
