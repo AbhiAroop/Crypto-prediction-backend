@@ -3,9 +3,9 @@ services:
     name: crypto-prediction-api
     runtime: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn --chdir src wsgi:app
+    startCommand: cd src && gunicorn wsgi:app --bind 0.0.0.0:$PORT
     envVars:
       - key: PYTHON_VERSION
         value: 3.12
-      - key: PORT
-        value: 10000
+      - key: PYTHONPATH
+        value: /opt/render/project/src
