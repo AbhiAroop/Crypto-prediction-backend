@@ -8,16 +8,29 @@ from models.prediction_model import PredictionModel
 from utils.data_processor import preprocess_data, create_sequences, validate_input
 
 app = Flask(__name__)
+
+# Configure CORS
 CORS(app, resources={
     r"/*": {
         "origins": [
             "https://crypto-prediction-frontend.vercel.app",
-            "http://localhost:3000"  # For local development
+            "http://localhost:3000"
         ],
-        "methods": ["GET", "POST"],
-        "allow_headers": ["Content-Type"]
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"],
+        "expose_headers": ["Content-Range", "X-Content-Range"],
+        "supports_credentials": True,
+        "max_age": 120
     }
 })
+
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', 'https://crypto-prediction-frontend.vercel.app')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    return response
 
 # Initialize the prediction model
 model = PredictionModel()
