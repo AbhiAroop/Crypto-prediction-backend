@@ -6,8 +6,7 @@
             "use": "@vercel/python",
             "config": {
                 "maxLambdaSize": "15mb",
-                "runtime": "python3.11",
-                "pip": ["pip>=23.0.0"]
+                "runtime": "python3.9"
             }
         }
     ],
@@ -16,8 +15,5 @@
             "src": "/(.*)",
             "dest": "src/app.py"
         }
-    ],
-    "env": {
-        "PYTHONPATH": "/vercel/path0"
-    }
+    ]
 }
