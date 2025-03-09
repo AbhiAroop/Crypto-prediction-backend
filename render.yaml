@@ -9,5 +9,5 @@ services:
         value: 3.9
       - key: PYTHONPATH
         value: /opt/render/project/src
-      - key: CORS_ALLOWED_ORIGINS 
-        value: "https://crypto-prediction-frontend-e0brht1kb-abhiram-aroops-projects.vercel.app,https://crypto-prediction-frontend.vercel.app,http://localhost:3000"
+      - key: FLASK_ENV
+        value: production
