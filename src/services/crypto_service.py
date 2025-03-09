@@ -29,7 +29,15 @@ def process_data(data):
     df.set_index('timestamp', inplace=True)
     return df['price']  # Return only the price series
 
-def get_prediction_data(coin):
+def get_prediction_data(coin, days=30):
+    """
+    Fetch and process cryptocurrency data
+    Args:
+        coin (str): cryptocurrency id
+        days (int): number of days of historical data to fetch
+    Returns:
+        pd.Series: processed price data
+    """
     try:
         data = fetch_crypto_data(coin)
         df = process_data(data)

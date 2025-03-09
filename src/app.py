@@ -18,7 +18,7 @@ def process_chunk(coin, chunk_days, offset):
     """Process a chunk of prediction data"""
     try:
         # Get historical data from crypto service
-        data = get_prediction_data(coin, chunk_days)
+        data = get_prediction_data(coin)  # Remove chunk_days parameter
         
         if not data or len(data) == 0:
             raise ValueError(f"No data received for {coin}")
