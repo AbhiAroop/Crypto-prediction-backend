@@ -1,8 +1,11 @@
-import os
+import multiprocessing
 
-bind = f"0.0.0.0:{os.environ.get('PORT', 10000)}"
-workers = 2
+bind = "0.0.0.0:10000"
+workers = multiprocessing.cpu_count() * 2 + 1
 threads = 4
-timeout = 120
-pythonpath = '.'
-module_name = 'wsgi:app'
+worker_class = 'gthread'
+worker_connections = 1000
+timeout = 300
+keepalive = 2
+max_requests = 1000
+max_requests_jitter = 50

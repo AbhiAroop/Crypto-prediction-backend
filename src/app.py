@@ -32,6 +32,8 @@ def after_request(response):
 
 # Initialize the prediction model
 model = PredictionModel()
+prediction_cache = {}
+MAX_CACHE_SIZE = 100  # Limit cache size to avoid memory issues
 
 # Store predictions in memory (consider using a proper database for production)
 prediction_cache = {}
@@ -45,63 +47,28 @@ def predict():
     try:
         if request.method == 'POST':
             data = request.json
-            print(f"Received request data: {data}")
             
             if not data:
                 return jsonify({'error': 'No data provided'}), 400
                 
             coin = data.get('coin')
-            print(f"Selected cryptocurrency: {coin}")
-            
-            if not coin:
-                return jsonify({'error': 'No cryptocurrency specified'}), 400
-                
             days = int(data.get('days', 1))
-            print(f"Prediction days: {days}")
             
-            # Validate input
-            validate_input(coin, days)
+            # Memory optimization: Clear old cache entries
+            if len(prediction_cache) > MAX_CACHE_SIZE:
+                oldest_key = min(prediction_cache.items(), key=lambda x: x[1]['timestamp'])[0]
+                del prediction_cache[oldest_key]
             
-            # Fetch and process data
-            prices = get_prediction_data(coin)
-            print(f"Fetched price data shape: {len(prices) if prices is not None else 'None'}")
-            
-            if prices is None or len(prices) == 0:
-                return jsonify({'error': 'No data available for this cryptocurrency'}), 404
-                
-            # Preprocess data
-            normalized_data, scaler = preprocess_data(prices)
-            print(f"Normalized data shape: {normalized_data.shape}")
-            
-            # Create sequences for prediction
-            X, y = create_sequences(normalized_data, model.sequence_length)
-            print(f"Training data shapes - X: {X.shape}, y: {y.shape}")
-            
-            # Train model
-            model.train(X, y)
-            
-            # Generate predictions
-            last_sequence = normalized_data[-model.sequence_length:]
+            # Process data in chunks
             predictions = []
+            chunk_size = 50  # Process data in smaller chunks
             
-            # Updated to handle more days
-            for i in range(days):
-                current_sequence = last_sequence.reshape((1, model.sequence_length, 1))
-                next_pred = model.predict(current_sequence, scaler)[0][0]
-                predictions.append(float(next_pred))
-                print(f"Day {i+1} prediction: ${next_pred:.2f}")
-                
-                # Update sequence for next prediction with rolling window
-                last_sequence = np.roll(last_sequence, -1)
-                last_sequence[-1] = scaler.transform([[next_pred]])[0]
-                
-                # Add progress logging for longer predictions
-                if (i + 1) % 10 == 0:
-                    print(f"Progress: {i + 1}/{days} days predicted")
+            for i in range(0, days, chunk_size):
+                chunk_days = min(chunk_size, days - i)
+                chunk_predictions = process_chunk(coin, chunk_days, i)
+                predictions.extend(chunk_predictions)
+                gc.collect()  # Force garbage collection
             
-            print(f"Final predictions: {predictions}")
-            
-            # Store predictions in cache
             prediction_cache[coin] = {
                 'predictions': predictions,
                 'timestamp': datetime.now(),
