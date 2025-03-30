@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import numpy as np
+import pandas as pd
 from datetime import datetime
 import gc
 from services.crypto_service import get_prediction_data
@@ -14,22 +15,41 @@ model = PredictionModel()
 prediction_cache = {}
 MAX_CACHE_SIZE = 100
 
+def validate_data(data):
+    """Validate data format and content"""
+    if isinstance(data, pd.DataFrame):
+        return not data.empty
+    elif isinstance(data, pd.Series):
+        return not data.empty
+    return False
+
 def process_chunk(coin, chunk_days, offset):
     """Process a chunk of prediction data"""
     try:
         # Get historical data from crypto service
-        data = get_prediction_data(coin)  # Remove chunk_days parameter
+        data = get_prediction_data(coin)
         
-        if not data or len(data) == 0:
-            raise ValueError(f"No data received for {coin}")
+        # Validate data
+        if not validate_data(data):
+            raise ValueError(f"Invalid or empty data received for {coin}")
+            
+        # Ensure data is in correct format
+        if isinstance(data, pd.Series):
+            data = pd.DataFrame(data)
             
         # Process the prediction using your model
         result = model.predict(data, chunk_days)
         
+        # Ensure result is list format
+        if isinstance(result, np.ndarray):
+            result = result.tolist()
+        
         # Adjust timestamps based on offset
         if offset > 0:
-            for item in result:
-                item[0] += offset * 86400000  # Add offset in milliseconds
+            result = [
+                [timestamp + (offset * 86400000), value] 
+                for timestamp, value in result
+            ]
                 
         return result
         
@@ -47,26 +67,32 @@ def predict():
                 return jsonify({'error': 'No data provided'}), 400
                 
             coin = data.get('coin')
-            days = int(data.get('days', 1))
+            try:
+                days = int(data.get('days', 1))
+            except (TypeError, ValueError):
+                return jsonify({'error': 'Invalid days parameter'}), 400
             
-            if not coin or not days:
-                return jsonify({'error': 'Missing required parameters'}), 400
+            if not coin or days < 1:
+                return jsonify({'error': 'Missing or invalid parameters'}), 400
                 
-            # Memory optimization: Clear old cache entries
+            # Memory optimization
             if len(prediction_cache) > MAX_CACHE_SIZE:
                 oldest_key = min(prediction_cache.items(), key=lambda x: x[1]['timestamp'])[0]
                 del prediction_cache[oldest_key]
             
-            # Process data in chunks
             predictions = []
-            chunk_size = 50  # Process data in smaller chunks
+            chunk_size = min(50, days)  # Process data in smaller chunks
             
             try:
                 for i in range(0, days, chunk_size):
                     chunk_days = min(chunk_size, days - i)
                     chunk_predictions = process_chunk(coin, chunk_days, i)
-                    predictions.extend(chunk_predictions)
-                    gc.collect()  # Force garbage collection
+                    if chunk_predictions:
+                        predictions.extend(chunk_predictions)
+                    gc.collect()
+                
+                if not predictions:
+                    raise ValueError("No predictions generated")
                 
                 prediction_cache[coin] = {
                     'predictions': predictions,
