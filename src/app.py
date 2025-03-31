@@ -68,6 +68,11 @@ def process_chunk(coin, chunk_days, offset):
         print(f"Error processing chunk: {str(e)}")
         raise
 
+@app.route('/status', methods=['GET'])
+def status():
+    """Health check endpoint"""
+    return jsonify({'status': 'ok'}), 200
+
 @app.after_request
 def after_request(response):
     """Add headers to every response."""
