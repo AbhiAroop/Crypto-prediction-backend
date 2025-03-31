@@ -12,12 +12,14 @@ CORS(app, resources={
     r"/*": {
         "origins": [
             "https://crypto-prediction-frontend.vercel.app",
+            "https://crypto-prediction-frontend-git-main-abhiram-aroops-projects.vercel.app/",
+            "https://crypto-prediction-frontend-cpwmbkc46-abhiram-aroops-projects.vercel.app/",
             "http://localhost:3000"  # For local development
         ],
         "methods": ["GET", "POST", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization"],
         "supports_credentials": False,
-        "max_age": 3600
+        "max_age": 9000
     }
 })
 
