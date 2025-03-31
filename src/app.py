@@ -8,7 +8,18 @@ from services.crypto_service import get_prediction_data
 from models.prediction_model import PredictionModel
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={
+    r"/*": {
+        "origins": [
+            "https://crypto-prediction-frontend.vercel.app",
+            "http://localhost:3000"  # For local development
+        ],
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"],
+        "supports_credentials": False,
+        "max_age": 3600
+    }
+})
 
 # Initialize model and cache
 model = PredictionModel()
@@ -56,6 +67,15 @@ def process_chunk(coin, chunk_days, offset):
     except Exception as e:
         print(f"Error processing chunk: {str(e)}")
         raise
+
+@app.after_request
+def after_request(response):
+    """Add headers to every response."""
+    response.headers.add('Access-Control-Allow-Origin', 'https://crypto-prediction-frontend.vercel.app')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
+    response.headers.add('Access-Control-Allow-Credentials', 'false')
+    return response
 
 @app.route('/predict', methods=['GET', 'POST'])
 def predict():
